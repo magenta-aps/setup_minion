@@ -1,7 +1,6 @@
 #!/bin/bash
 # The authoritative source for this script is https://github.com/magenta-aps/setup_minion
 
-
 MASTER_SERVER=$1
 MINION_ID=$2
 
@@ -41,20 +40,6 @@ if [[ "${OS_DISTRO}" != "Ubuntu" ]]; then
    echo "This script only supports Ubuntu"
    exit 1
 fi
-UBUNTU_VERSION=$(lsb_release -r | cut -f2)
-UBUNTU_VERSION_CODENAME=$(lsb_release -c | cut -f2)
-
-# Determine the Salt version we wish to install
-declare -A SALT_VERSION_MAP
-SALT_VERSION_MAP["20.04"]="3002"
-SALT_VERSION_MAP["18.04"]="3002"
-SALT_VERSION_MAP["16.04"]="3002"
-
-SALT_VERSION=${SALT_VERSION_MAP[${UBUNTU_VERSION}]}
-if [[ -z "${SALT_VERSION}" ]]; then
-    echo "Unable to determine Salt Version from Ubuntu Version"
-    exit 1
-fi
 
 # Check that we are sudo
 if [[ ${EUID} -ne 0 ]]; then
@@ -67,10 +52,16 @@ fi
 banner "Installing salt-minion"
 
 # Add repository gpg public key
-wget -O - https://repo.saltstack.com/py3/ubuntu/${UBUNTU_VERSION}/amd64/${SALT_VERSION}/SALTSTACK-GPG-KEY.pub | sudo apt-key add -
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | sudo tee /etc/apt/keyrings/salt-archive-keyring.pgp
 
 # Add repository to apt sources
-echo "deb http://repo.saltstack.com/py3/ubuntu/${UBUNTU_VERSION}/amd64/${SALT_VERSION} ${UBUNTU_VERSION_CODENAME} main" > /etc/apt/sources.list.d/saltstack.list
+curl -fsSL https://github.com/saltstack/salt-install-guide/releases/latest/download/salt.sources | sudo tee /etc/apt/sources.list.d/salt.sources
+
+# Pin salt
+echo 'Package: salt-*
+Pin: version 3006.9
+Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/salt-pin-1001
 
 # Update apt cache
 sudo apt-get update

@@ -60,7 +60,7 @@ curl -fsSL https://github.com/saltstack/salt-install-guide/releases/latest/downl
 
 # Pin salt
 echo 'Package: salt-*
-Pin: version 3006.9
+Pin: version 3006.14
 Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/salt-pin-1001
 
 # Update apt cache
